@@ -34,10 +34,11 @@ def train_step(model: torch.nn.Module,
     model.train()
 
     # Setup train loss and train accuracy values
-    train_loss, train_acc = 0, 0
+    train_loss, train_acc, total_samples = 0, 0, 0
 
     # Loop through data loader data batches
     for batch, (X, y) in enumerate(dataloader):
+        
         # Send data to target device
         X, y = X.to(device), y.to(device)
 
@@ -59,11 +60,12 @@ def train_step(model: torch.nn.Module,
 
         # Calculate and accumulate accuracy metric across all batches
         y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
-        train_acc += (y_pred_class == y).sum().item()/len(y_pred)
+        train_acc += (y_pred_class == y).sum().item()
+        total_samples += y.size(0)
 
     # Adjust metrics to get average loss and accuracy per batch 
     train_loss = train_loss / len(dataloader)
-    train_acc = train_acc / len(dataloader)
+    train_acc = train_acc / total_samples
     return train_loss, train_acc
 
 def test_step(model: torch.nn.Module, 
@@ -91,12 +93,13 @@ def test_step(model: torch.nn.Module,
     model.eval() 
 
     # Setup test loss and test accuracy values
-    test_loss, test_acc = 0, 0
+    test_loss, test_acc, total_samples = 0, 0, 0
 
     # Turn on inference context manager
     with torch.inference_mode():
         # Loop through DataLoader batches
         for batch, (X, y) in enumerate(dataloader):
+          
             # Send data to target device
             X, y = X.to(device), y.to(device)
 
@@ -109,11 +112,12 @@ def test_step(model: torch.nn.Module,
 
             # Calculate and accumulate accuracy
             test_pred_labels = test_pred_logits.argmax(dim=1)
-            test_acc += ((test_pred_labels == y).sum().item()/len(test_pred_labels))
-
+            test_acc += (test_pred_labels == y).sum().item()
+            total_samples += y.size(0)
+            
     # Adjust metrics to get average loss and accuracy per batch 
     test_loss = test_loss / len(dataloader)
-    test_acc = test_acc / len(dataloader)
+    test_acc = test_acc / total_samples
     return test_loss, test_acc
 
 def train(model: torch.nn.Module, 
@@ -134,10 +138,17 @@ def train(model: torch.nn.Module,
     model.to(device)
 
     for epoch in tqdm(range(epochs)):
-        train_loss, train_acc = train_step(model=model, dataloader=train_dataloader,
-                                           loss_fn=loss_fn, optimizer=optimizer, device=device)
-        test_loss, test_acc = test_step(model=model, dataloader=test_dataloader,
-                                        loss_fn=loss_fn, device=device)
+        train_loss, train_acc = train_step(
+        model=model,        
+        dataloader=train_dataloader,
+        loss_fn=loss_fn, 
+        optimizer=optimizer, 
+        device=device)
+        
+        test_loss, test_acc = test_step(
+        model=model, 
+        dataloader=test_dataloader,
+        loss_fn=loss_fn, device=device)
 
         # Learning rate scheduling (if scheduler is passed)
         if scheduler:
