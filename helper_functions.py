@@ -6,7 +6,7 @@ If a function gets defined once and could be used over and over, it'll go in her
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
-
+import pandas as pd
 from torch import nn
 
 import os
@@ -292,3 +292,11 @@ def download_data(source: str,
             os.remove(data_path / target_file)
     
     return image_path
+
+def convert_result_to_csv(results, name, location):
+    
+    # Convert the dictionary to a pandas DataFrame
+    df = pd.DataFrame([results])
+    
+    # Save the DataFrame to a CSV file
+    df.to_csv(f"{location}/{name}.csv", index=False)

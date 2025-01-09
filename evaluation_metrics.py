@@ -1,7 +1,7 @@
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 import torch
 
-def evaluate_metrics(model, dataloader, device, average='macro'):
+def calculate_metrics(model, dataloader, device, average='macro'):
     model.eval()
     all_labels = []
     all_preds = []
